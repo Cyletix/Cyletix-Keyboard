@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 qwerty='qazwsxedcrfvtgbyhnujmik,ol.p;/'
 cyletix34='qazwsxdecrtvfgbyhnjlmki,po.;u/'
 cyletix10 = 'qazwsxdecrtvfgb;hnjlmki,yo.pu/'
@@ -51,45 +53,55 @@ for syllable in pinyin_syllables:
     if not categorized:
         categories["-"].append(syllable)
 
-
-
-
-
 # 定义每个手指负责的键位
-keys_per_finger = [[0, 1, 2], [3, 4, 5], [6, 7], [8, 9, 10, 11, 12, 13, 14], [15, 16, 17, 18, 19, 20], [21, 22, 23], [24, 25, 26], [27, 28, 29]]
+keys_per_finger = [
+    [0, 1, 2], 
+    [3, 4, 5], 
+    [6, 7], 
+    [8, 9, 10, 11, 12, 13, 14], 
+    [15, 16, 17, 18, 19, 20], 
+    [21, 22, 23], 
+    [24, 25, 26], 
+    [27, 28, 29]
+]
 
 # 创建一个字典映射每个键位到对应的手指
 key_to_finger = {key: finger for finger, keys in enumerate(keys_per_finger) for key in keys}
 
-def calculate_finger_repeat(qwerty):
+def calculate_finger_repeat(qwerty, categories):
     # 定义一个函数将拼音字符转换为键位索引
     char_to_index = {char: index for index, char in enumerate(qwerty)}
+    
     def pinyin_to_key_indices(pinyin):
         return [char_to_index[char] for char in pinyin if char in char_to_index]
 
     # 记录重复使用手指的字母对并进行计数
-    repeated_pairs_count = {}
+    repeated_pairs_count = defaultdict(int)
     same_finger_count = 0
-    same_finger_pinyin = {}
+    same_finger_pinyin = defaultdict(set)
 
     # 检查是否使用同一根手指连续输入
-    for initial, syllables in categories.items():
+    for syllables in categories.values():
         for pinyin in syllables:
             key_indices = pinyin_to_key_indices(pinyin)
             finger_indices = [key_to_finger[key] for key in key_indices]
-            repeated_pairs = [(pinyin[i], pinyin[i + 1]) for i in range(len(finger_indices) - 1) if finger_indices[i] == finger_indices[i + 1]]
+            repeated_pairs = [
+                (pinyin[i], pinyin[i + 1]) 
+                for i in range(len(finger_indices) - 1) 
+                if finger_indices[i] == finger_indices[i + 1]
+            ]
             if repeated_pairs:
                 same_finger_count += 1
                 for pair in repeated_pairs:
-                    if pair in repeated_pairs_count:
-                        repeated_pairs_count[pair] += 1
-                        same_finger_pinyin[pair].add(pinyin)
-                    else:
-                        repeated_pairs_count[pair] = 1
-                        same_finger_pinyin[pair] = {pinyin}
+                    repeated_pairs_count[pair] += 1
+                    same_finger_pinyin[pair].add(pinyin)
 
     # 按照出现次数从大到小排序
-    sorted_repeated_pairs = sorted(repeated_pairs_count.items(), key=lambda item: item[1], reverse=True)
+    sorted_repeated_pairs = sorted(
+        repeated_pairs_count.items(), 
+        key=lambda item: item[1], 
+        reverse=True
+    )
 
     # 打印排序后的列表
     print("连续输入字母对-出现次数:")
@@ -98,8 +110,9 @@ def calculate_finger_repeat(qwerty):
 
     print(f"同手指连续输入的音节总数: {same_finger_count}")
 
+def main():
+    calculate_finger_repeat(qwerty, categories)
+    calculate_finger_repeat(cyletix34, categories)
 
-
-
-calculate_finger_repeat(qwerty)
-calculate_finger_repeat(cyletix34)
+if __name__ == "__main__":
+    main()
